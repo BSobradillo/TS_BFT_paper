@@ -2,10 +2,10 @@
 ##======================================================##
 ## SCRIPT : BFT TS PUBLICATION 2020
 ##
-## Authors : Jon Uranga &  Guillermo Boyra
-## Last update : 20-10-2020
+## Authors : Jon Uranga,  Guillermo Boyra & Bea Sobradillo
+## Last update : 02-03-2022
 ## Description: 
-##              Este script lee todas las exportaciones de TS d elos lances 
+##              Este script lee todas las exportaciones de TS de los lances 
 ##              registrados en la campaña de BFT Index y calcula el TS tipico del bluefin tuna 
 ##              
 ##======================================================##
@@ -30,13 +30,13 @@ library(geosphere)
 
 
 # Muestreo biologico
-muestreo<-fread("muestreo_2016_bft_index.csv")
+muestreo<-fread("Datos/muestreo_2016_bft_index.csv")
 muestreo<-muestreo[-6,]
 
 
 # Cargamos los SINGLE TARGET DE LOS FISH TRACKS NEW TOBY-----
 
-idx.files <- list.files("exports/",pattern="(targets)");idx.files
+idx.files <- list.files("Datos/exports/",pattern="(targets)");idx.files
 idx.files<-as.data.frame(idx.files)
 names(idx.files)<-"source"
 idx.files$calera<-as.numeric(sub("\\D+","",idx.files$source))
@@ -45,7 +45,7 @@ idx.files <- idx.files %>% arrange(calera)
 all_ts<-c()
 for(i in 1:dim(idx.files)[1]){
   
-  ft <- setDT(read.table(file=paste("exports/",idx.files$source[i],sep=""), sep=",",header = TRUE))
+  ft <- setDT(read.table(file=paste("Datos/exports/",idx.files$source[i],sep=""), sep=",",header = TRUE))
   
   # idx <- which(fish_tracks$id==fish_tracks_filter[i])
   
@@ -84,17 +84,17 @@ bio_ft_summary <- all_ts %>%
 # Modelo optimo:
 modelo <- lm(bio_ft_summary$meanTS ~ (bio_ft_summary$length))
 summary(modelo)
-fwrite(bio_ft_summary,"Resumen_lances.csv")
+# fwrite(bio_ft_summary,"Datos/Resumen_lances.csv")
 
 bio_ft_summary_order <- bio_ft_summary %>% arrange(length) ; bio_ft_summary_order
 a<-setDT(summary(modelo)[4])[2,4]
 my_text <- paste("Multiple R-squared:" ,
                  round(as.numeric(summary(modelo)[8]),2), 
-                 "p-value: ",
+                 "\np-value: ",
                  round(as.numeric(a),7))
 my_text2 <- paste("Slope (a):" ,
                   round(as.numeric(setDT(summary(modelo)[4])[2,1]),3), 
-                  "Intercept (b): ",
+                  "\nIntercept (b): ",
                   round(as.numeric(setDT(summary(modelo)[4])[1,1]),3))
 
 ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
@@ -103,32 +103,34 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   geom_errorbar(aes(ymin=meanTS-(sdev_TS/2), ymax=meanTS+(sdev_TS/2)), width=.0051,col="grey30",alpha=0.49) + 
   theme_minimal()+
   xlab("Log (Length)")+
-  ylab("Target Strength")+
+  ylab("TS (dB)")+
   # ggtitle("RELACION del TS ~ LENGTH (FISH TRACKS)")+
   # theme(plot.title = element_text(hjust = 0.5))+
   # annotation_custom(my_grob)+
-  annotate("text", x=80.5, y=-13, label=my_text,col="maroon") +
-  annotate("text", x=77, y=-15, label=my_text2,col="maroon") +
+  annotate("text", x=60, y=-15, label=my_text, hjust=0) +
+  annotate("text", x=60, y=-18, label=my_text2, hjust=0) +
   scale_x_log10() +
   theme_classic()+geom_text(label=bio_ft_summary$id,mapping = aes(x=length+0.75,y=meanTS+0.75))
 
-ggsave("figuras/ts_log_length_ken6.tiff", width=23, height=18, units="cm")
+ggsave("Figuras/ts_log_length_ken6.tiff", width=23, height=18, units="cm")
 
 
 
 # HISTOGRAMAS FACET
 
 ggplot(all_ts, aes(x=TS_comp)) +
-  geom_histogram(aes(y = stat(density)), fill="darkslategray4",binwidth = 2) +
-  geom_density(alpha = 0.2, fill = "grey50",color="grey30") +
+  geom_histogram(aes(y = stat(density)), fill="white",binwidth = 2,color="black") +
+  geom_density(alpha = 0.2, fill = "white",color="grey30") +
   theme(legend.position = "none") +
-  geom_vline(aes(xintercept = -45),color = "#FC4E07",linetype = "dashed", size = 0.1)+
-  ggtitle ("TS freq. distr. for all sets") + 
-  xlab ("Target Strength (dB)") + 
+  # geom_vline(aes(xintercept = -45),color = "#FC4E07",linetype = "dashed", size = 0.1)+
+  # ggtitle ("TS freq. distr. for all sets") + 
+  xlab ("TS (dB)") + 
   ylab ("Frequency") +
-  facet_wrap(~id,nrow=2,scales = "free")+theme_classic()
+  facet_wrap(~id,nrow=2,scales = "free_y") +
+  theme_classic()
 
-ggsave("FIGURAS/ggridges_fish_track_distrib_ALL_facet.tiff", width=27, height=17, units="cm")
+ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
+       # width=27, height=17, units="cm")
 
 
 
@@ -187,7 +189,7 @@ ggplot(data=all_ts, aes(x = TS_comp, y = as.factor(round(length,2)))) +
   geom_text(aes(x = -1, y=10.3,label=bio_ft_summary_order$id[10]),color="blue")
 
 # ggsave("figuras/ggridges_por_BIO.tiff", width=17, height=17, units="cm")
-ggsave("figuras/ggridges_por_BIO_ken6.tiff", width=17, height=17, units="cm")
+# ggsave("Figuras/ggridges_por_BIO_ken6.tiff", width=17, height=17, units="cm")
 
 
 
@@ -237,20 +239,30 @@ ggplot(all_ts2,aes(x=as.factor(length),y=TS_comp))+
 
 
 # FIGURA  TS ~ TILT    TOBY
+library(magick)
+img <- image_read("Figuras/tuna_edit.png") 
 
-ggplot(all_ts2,aes(x=Tilt_angle,y=TS_comp ))+
-  geom_point(size=1.3, alpha=0.2)+
+
+  ggplot(all_ts2, aes(x=Tilt_angle,y=TS_comp )) +
+  geom_point(size=1.3, alpha=0.2) +
   geom_smooth(method = "loess",span = 0.8) +
   # geom_smooth(method = "gam") +
-  theme_minimal()+
-  xlab("Tilt")+
-  ylab("Target Strength")+
-  ggtitle("TS~Tilt for all sets")
+  theme_classic() +
+  xlab("Tilt angle (degrees)") +
+  ylab("TS (dB)") +
+  annotation_raster(img, ymin = -30,ymax= -25,xmin = -90,xmax = -55)
+    
+
+
+
+  
+
+  # ggtitle("TS~Tilt for all sets")
 
 
 
 # ggsave("ts_tilt_FT_loess.tiff", width=18, height=18, units="cm")
-ggsave("figuras/ts_tilt_FT_gam.tiff", width=21, height=17, units="cm")
+# ggsave("figuras/ts_tilt_FT_gam.tiff", width=21, height=17, units="cm")
 # ggsave("ts_tilt_FT_gam_sin_085.tiff", width=18, height=18, units="cm")
 
 # ----
@@ -283,7 +295,7 @@ ggplot(all_ts,aes(x=as.numeric(all_ts$length),y=Target_range))+
   theme_classic()
 
 # ggsave("depth_length.tiff", width=18, height=18, units="cm")
-ggsave("depth_length_ken6.tiff", width=18, height=18, units="cm")
+# ggsave("Figuras/depth_length_ken6.tiff", width=18, height=18, units="cm")
 
 
 
@@ -317,7 +329,7 @@ ggplot(bio_ft_summary,aes(x=meanTS,y=-Mean_depth))+
   # annotate("text", x=30, y=0, label=my_text) +
   theme_classic()
 
-ggsave("ts_tilt_mean.tiff", width=18, height=18, units="cm")
+# ggsave("Figuras/ts_tilt_mean.tiff", width=18, height=18, units="cm")
 # ggsave("ts_tilt_all.tiff", width=18, height=18, units="cm")
 
 
@@ -342,7 +354,7 @@ ggplot(all_ts,aes( x = TS_comp)) +
   geom_text(aes(-10, .31, label=as.character(Num_Fish_Tracks)))
 
 # ggsave("figuras/ts_distrib_fishtracks.tiff", width=17, height=17, units="cm")
-ggsave("figuras/ts_distrib_fishtracks_ken6.tiff", width=17, height=17, units="cm")
+# ggsave("Figuras/ts_distrib_fishtracks_ken6.tiff", width=17, height=17, units="cm")
 
 
 
@@ -370,7 +382,7 @@ ggplot(all_ts, aes(x = TS_comp, y = as.factor(length))) +
   annotate("segment", x=-33, xend=-31, y=3.9, yend=3.9)
 
 
-ggsave("FIGURAS/ggridges_fish_track_distrib_ALL_facet.tiff", width=17, height=17, units="cm")
+# ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width=17, height=17, units="cm")
 
 
 
