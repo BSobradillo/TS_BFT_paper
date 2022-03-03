@@ -14,7 +14,7 @@
 ## Load packages  -------------------------------------------------------------------------
 library(data.table)
 library(stringr)
-library(BuoysAZTI) # Own package with neccesary functions and tables to run the script
+library(BuoysAZTI) # Own package with necesary functions and tables to run the script
 library(dplyr)
 library(RPostgreSQL)
 library(tidyr)
@@ -112,7 +112,7 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   scale_x_log10() +
   theme_classic()+geom_text(label=bio_ft_summary$id,mapping = aes(x=length+0.75,y=meanTS+0.75))
 
-ggsave("Figuras/ts_log_length_ken6.tiff", width=23, height=18, units="cm")
+# ggsave("Figuras/ts_log_length_ken6.tiff", width=23, height=18, units="cm")
 
 
 
@@ -129,7 +129,7 @@ ggplot(all_ts, aes(x=TS_comp)) +
   facet_wrap(~id,nrow=2,scales = "free_y") +
   theme_classic()
 
-ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
+# ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
        # width=27, height=17, units="cm")
 
 
@@ -240,7 +240,17 @@ ggplot(all_ts2,aes(x=as.factor(length),y=TS_comp))+
 
 # FIGURA  TS ~ TILT    TOBY
 library(magick)
-img <- image_read("Figuras/tuna_edit.png") 
+img1 <- image_read("Figuras/tuna_edit1.PNG")
+img2 <- image_read("Figuras/tuna_edit2.PNG")
+img3 <- image_read("Figuras/tuna_edit3.PNG")
+img4 <- image_read("Figuras/tuna_edit4.PNG")
+img5 <- image_read("Figuras/tuna_edit5.PNG")
+# img_rot1 <- image_rotate(img,70)
+# img_rot2 <- image_rotate(img,15)
+# img_rot3 <- image_rotate(img,0)
+# img_rot4 <- image_rotate(img,-70)
+# img_rot5 <- image_rotate(img,-30)
+# print(img_rot)
 
 
   ggplot(all_ts2, aes(x=Tilt_angle,y=TS_comp )) +
@@ -250,9 +260,13 @@ img <- image_read("Figuras/tuna_edit.png")
   theme_classic() +
   xlab("Tilt angle (degrees)") +
   ylab("TS (dB)") +
-  annotation_raster(img, ymin = -30,ymax= -25,xmin = -90,xmax = -55)
+  annotation_raster(img1, ymin = -35,ymax= -25,xmin = -90,xmax = -55) + 
+    annotation_raster(img2, ymin = -30,ymax= -23,xmin = -50,xmax = -15) + 
+    annotation_raster(img3, ymin = -35,ymax= -30,xmin = -10,xmax = 20) + 
+    annotation_raster(img4, ymin = -40,ymax= -30,xmin = 20,xmax = 55) +
+    annotation_raster(img5, ymin = -35,ymax= -26,xmin = 60,xmax = 95)
     
-
+  ggsave("Figuras/TS-tilt-tuna.tiff", width = 17, height=12,units="cm", dpi = 300)
 
 
   
