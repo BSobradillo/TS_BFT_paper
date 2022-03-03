@@ -108,11 +108,13 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   # theme(plot.title = element_text(hjust = 0.5))+
   # annotation_custom(my_grob)+
   annotate("text", x=60, y=-15, label=my_text, hjust=0) +
-  annotate("text", x=60, y=-18, label=my_text2, hjust=0) +
+  annotate("text", x=60, y=-19, label=my_text2, hjust=0) +
   scale_x_log10() +
-  theme_classic()+geom_text(label=bio_ft_summary$id,mapping = aes(x=length+0.75,y=meanTS+0.75))
+  theme_classic() +
+theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
+  geom_text(label=bio_ft_summary$id,mapping = aes(x=length+0.75,y=meanTS+0.75))
 
-# ggsave("Figuras/ts_log_length_ken6.tiff", width=23, height=18, units="cm")
+ggsave("Figuras/ts_log_length_ken6.tiff", width=17, height=12, units="cm")
 
 
 
@@ -120,7 +122,7 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
 
 ggplot(all_ts, aes(x=TS_comp)) +
   geom_histogram(aes(y = stat(density)), fill="white",binwidth = 2,color="black") +
-  geom_density(alpha = 0.2, fill = "white",color="grey30") +
+  geom_density(alpha = 0.2, fill = "white",color="black", size=0.75) +
   theme(legend.position = "none") +
   # geom_vline(aes(xintercept = -45),color = "#FC4E07",linetype = "dashed", size = 0.1)+
   # ggtitle ("TS freq. distr. for all sets") + 
@@ -129,7 +131,7 @@ ggplot(all_ts, aes(x=TS_comp)) +
   facet_wrap(~id,nrow=2,scales = "free_y") +
   theme_classic()
 
-# ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
+ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
        # width=27, height=17, units="cm")
 
 
@@ -240,11 +242,11 @@ ggplot(all_ts2,aes(x=as.factor(length),y=TS_comp))+
 
 # FIGURA  TS ~ TILT    TOBY
 library(magick)
-img1 <- image_read("Figuras/tuna_edit1.PNG")
-img2 <- image_read("Figuras/tuna_edit2.PNG")
-img3 <- image_read("Figuras/tuna_edit3.PNG")
-img4 <- image_read("Figuras/tuna_edit4.PNG")
-img5 <- image_read("Figuras/tuna_edit5.PNG")
+img1 <- image_read("Figuras/fish_tilt_img/tuna_edit1.PNG")
+img2 <- image_read("Figuras/fish_tilt_img/tuna_edit2.PNG")
+img3 <- image_read("Figuras/fish_tilt_img/tuna_edit3.PNG")
+img4 <- image_read("Figuras/fish_tilt_img/tuna_edit4.PNG")
+img5 <- image_read("Figuras/fish_tilt_img/tuna_edit5.PNG")
 # img_rot1 <- image_rotate(img,70)
 # img_rot2 <- image_rotate(img,15)
 # img_rot3 <- image_rotate(img,0)
@@ -260,6 +262,7 @@ img5 <- image_read("Figuras/tuna_edit5.PNG")
   theme_classic() +
   xlab("Tilt angle (degrees)") +
   ylab("TS (dB)") +
+    theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
   annotation_raster(img1, ymin = -35,ymax= -25,xmin = -90,xmax = -55) + 
     annotation_raster(img2, ymin = -30,ymax= -23,xmin = -50,xmax = -15) + 
     annotation_raster(img3, ymin = -35,ymax= -30,xmin = -10,xmax = 20) + 
@@ -290,26 +293,28 @@ modelo <- lm(all_ts$length ~ (all_ts$Target_range))
 a<-setDT(summary(modelo)[4])[2,4]
 my_text <- paste("Multiple R-squared:" ,
                  round(as.numeric(summary(modelo)[8]),3),
-                 "p-value: ",
+                 "\np-value: ",
                  round(as.numeric(a),3))
 
 
 
-ggplot(all_ts,aes(x=as.numeric(all_ts$length),y=Target_range))+
+ggplot(all_ts,aes(x=as.numeric(all_ts$length),y=-Target_range))+
   geom_point(size=1.3, alpha=0.5)+
   geom_smooth(method = "lm") +
   # geom_errorbar(aes(ymin=meanTS-sdev, ymax=meanTS+sdev), width=.0051,col="grey",alpha=0.49) + 
+  scale_y_continuous(breaks=c(0,-20,-40,-60), labels=c("0","20","40","60")) +
   theme_minimal()+
   xlab("Length (cm)")+
   ylab("Mean depth (m)")+
   # ggtitle("RELACION del TS ~ LENGTH (FISH TRACKS)")+
   # theme(plot.title = element_text(hjust = 0.5))+
   # annotation_custom(my_grob)+
-  annotate("text", x=94, y=8, label=my_text) +
-  theme_classic()
+  annotate("text", x=120, y=-55, label=my_text, hjust=0) +
+  theme_classic()+
+  theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) 
 
 # ggsave("depth_length.tiff", width=18, height=18, units="cm")
-# ggsave("Figuras/depth_length_ken6.tiff", width=18, height=18, units="cm")
+ggsave("Figuras/depth_length_ken6.tiff", width=17, height=12, units="cm")
 
 
 
