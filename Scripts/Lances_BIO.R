@@ -65,6 +65,7 @@ table(all_ts$id)
 # all_ts <- all_ts[-which(all_ts$id==9)]
 
 
+
 # ////   RESUMEN
 
 library(seewave)
@@ -81,21 +82,35 @@ bio_ft_summary <- all_ts %>%
             Mean_depth = round(mean(Target_range),0)) %>% 
   ungroup() 
 
-# Modelo optimo:
-modelo <- lm(bio_ft_summary$meanTS ~ (bio_ft_summary$length))
+# Modelo optimo: (BS: añado log10 de L)
+modelo <- lm(bio_ft_summary$meanTS ~ log10(bio_ft_summary$length))
 summary(modelo)
+modelo$coefficients
 # fwrite(bio_ft_summary,"Datos/Resumen_lances.csv")
 
 bio_ft_summary_order <- bio_ft_summary %>% arrange(length) ; bio_ft_summary_order
-a<-setDT(summary(modelo)[4])[2,4]
+# BS
+meanTS <- meandB(bio_ft_summary$meanTS); meanTS
+mean_sigma_w <- mean(10^(bio_ft_summary$meanTS/10)*bio_ft_summary$Num_Fish_Tracks/sum(bio_ft_summary$Num_Fish_Tracks)); mean_sigma_w
+mean_TS_w <- 10*log10(mean_sigma_w); mean_TS_w
+
+meanSD <- mean(bio_ft_summary$sdev_TS); meanSD
+
+meanL <- mean(bio_ft_summary$length); meanL
+minL <- min(bio_ft_summary$length); minL
+maxL <- max(bio_ft_summary$length); maxL
+
+
+
+a<-setDT(summary(modelo)[4])[2,4]; a
 my_text <- paste("Multiple R-squared:" ,
                  round(as.numeric(summary(modelo)[8]),2), 
                  "\np-value: ",
                  round(as.numeric(a),7))
-my_text2 <- paste("Slope (a):" ,
-                  round(as.numeric(setDT(summary(modelo)[4])[2,1]),3), 
+my_text2 <- paste("- Slope (a):" ,
+                  round(as.numeric(setDT(summary(modelo)[4])[2,1]),2), 
                   "\nIntercept (b): ",
-                  round(as.numeric(setDT(summary(modelo)[4])[1,1]),3))
+                  round(as.numeric(setDT(summary(modelo)[4])[1,1]),2))
 
 ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   geom_point(size=1.3, alpha=0.5)+
@@ -111,11 +126,55 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   annotate("text", x=60, y=-19, label=my_text2, hjust=0) +
   scale_x_log10() +
   theme_classic() +
-theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
+# theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
   geom_text(label=bio_ft_summary$id,mapping = aes(x=length+0.75,y=meanTS+0.75))
 
-ggsave("Figuras/ts_log_length_ken6.tiff", width=17, height=12, units="cm")
+# ggsave("Figuras/ts_log_length_ken6.tiff", width=17, height=12, units="cm")
 
+
+# slope fixed to 20
+?offset
+
+SE <- sd(bio_ft_summary$meanTS)/sqrt(length(bio_ft_summary$meanTS))
+L_mean_slope  <-  20
+flN  <-  transform(bio_ft_summary,w=1/as.numeric(SE)^2)
+
+# slope fixed
+m1 <- lm(as.numeric(meanTS) ~ 1 + offset(log10(flN$length)*L_mean_slope), data = flN)
+m1$coefficients
+# slope chosen by lm(...)
+m0 <- lm(as.numeric(meanTS) ~ log10(length), data=flN)
+m0$coefficients
+
+
+# b20 linear model
+my_text_b20 <- paste("- - Slope (a):" ,
+                  20, 
+                  "\nIntercept (b): ",
+                  round(as.numeric(setDT(summary(m1)[4])[1,1]),2))
+
+ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
+  geom_point(size=1.3, alpha=0.5)+
+  # geom_smooth(method = "lm") +
+  geom_errorbar(aes(ymin=meanTS-(sdev_TS/2), ymax=meanTS+(sdev_TS/2)), width=.0051,col="grey30",alpha=0.49) + 
+  geom_abline(slope=20, intercept=coef(m1)[1], lty=2) +
+  geom_abline(slope=coef(m0)[2], intercept=coef(m0)[1]) +
+  theme_minimal()+
+  xlab("Log (Length)")+
+  ylab("TS (dB)")+
+  # ggtitle("RELACION del TS ~ LENGTH (FISH TRACKS)")+
+  # theme(plot.title = element_text(hjust = 0.5))+
+  # annotation_custom(my_grob)+
+  annotate("text", x=60, y=-15, label=my_text, hjust=0) +
+  annotate("text", x=60, y=-19, label=my_text2, hjust=0) +
+  annotate("text", x=120, y=-35, label=my_text_b20, hjust=0) +
+
+  scale_x_log10() +
+  theme_classic() +
+  # theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
+  geom_text(label=bio_ft_summary$id,mapping = aes(x=length+0.75,y=meanTS+0.75))
+
+ggsave("Figuras/TS-logL-b20.tiff", width=17, height=12, units="cm")
 
 
 # HISTOGRAMAS FACET
@@ -262,12 +321,12 @@ img5 <- image_read("Figuras/fish_tilt_img/tuna_edit5.PNG")
   theme_classic() +
   xlab("Tilt angle (degrees)") +
   ylab("TS (dB)") +
-    theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
-  annotation_raster(img1, ymin = -35,ymax= -25,xmin = -90,xmax = -55) + 
+    # theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) +
+  # annotation_raster(img1, ymin = -35,ymax= -25,xmin = -90,xmax = -55) + 
     annotation_raster(img2, ymin = -30,ymax= -23,xmin = -50,xmax = -15) + 
-    annotation_raster(img3, ymin = -35,ymax= -30,xmin = -10,xmax = 20) + 
-    annotation_raster(img4, ymin = -40,ymax= -30,xmin = 20,xmax = 55) +
-    annotation_raster(img5, ymin = -35,ymax= -26,xmin = 60,xmax = 95)
+    annotation_raster(img3, ymin = -35,ymax= -30,xmin = -15,xmax = 15) + 
+    # annotation_raster(img4, ymin = -40,ymax= -30,xmin = 20,xmax = 55) +
+    annotation_raster(img5, ymin = -40,ymax= -30,xmin = 20,xmax = 55)
     
   ggsave("Figuras/TS-tilt-tuna.tiff", width = 17, height=12,units="cm", dpi = 300)
 
