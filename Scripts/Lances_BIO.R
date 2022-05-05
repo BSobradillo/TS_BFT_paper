@@ -74,32 +74,40 @@ bio_ft_summary <- all_ts %>%
   mutate(length = as.numeric(as.character(length))) %>%
   group_by(id) %>% 
   summarise(meanTS = round(meandB(TS_comp),1),
-            length = round(mean(length),1), 
+            N_TS = length(TS_comp),
+            length = round(mean(length),1),
+            N_length = length(length),
             sdev_TS = round(sd(TS_comp ),1),
             sdev_depth = round(sd(Target_range   ),1),
             Num_Fish_Tracks = unique(Num_Fish_Tracks),
             N_Sampled_Fish = unique(N_Sampled_Fish),
-            Mean_depth = round(mean(Target_range),0)) %>% 
+            Mean_depth = round(mean(Target_range),0), 
+            N_depth = length(Target_range)) %>%
   ungroup() 
 
-# Modelo optimo: (BS: añado log10 de L)
+# MODELO LINEAL: (BS: añado log10 de L)----
 modelo <- lm(bio_ft_summary$meanTS ~ log10(bio_ft_summary$length))
 summary(modelo)
 modelo$coefficients
 # fwrite(bio_ft_summary,"Datos/Resumen_lances.csv")
 
 bio_ft_summary_order <- bio_ft_summary %>% arrange(length) ; bio_ft_summary_order
-# BS
+
+# Bea
 meanTS <- meandB(bio_ft_summary$meanTS); meanTS
 mean_sigma_w <- mean(10^(bio_ft_summary$meanTS/10)*bio_ft_summary$Num_Fish_Tracks/sum(bio_ft_summary$Num_Fish_Tracks)); mean_sigma_w
 mean_TS_w <- 10*log10(mean_sigma_w); mean_TS_w
 
-meanSD <- mean(bio_ft_summary$sdev_TS); meanSD
+
+sd_TS <- sqrt((sum((bio_ft_summary$N_TS-1)*bio_ft_summary$sdev_TS^2))/sum(bio_ft_summary$N_TS-dim(bio_ft_summary)[1])); sd_TS
 
 meanL <- mean(bio_ft_summary$length); meanL
 minL <- min(bio_ft_summary$length); minL
 maxL <- max(bio_ft_summary$length); maxL
+sd_length <- sd(bio_ft_summary$length);sd_length
 
+mean_z <- mean(bio_ft_summary$Mean_depth); mean_z
+sd_z <- sqrt((sum((bio_ft_summary$N_depth-1)*bio_ft_summary$sdev_depth^2))/sum(bio_ft_summary$N_depth-dim(bio_ft_summary)[1])); sd_z
 
 
 a<-setDT(summary(modelo)[4])[2,4]; a
@@ -117,7 +125,7 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   geom_smooth(method = "lm") +
   geom_errorbar(aes(ymin=meanTS-(sdev_TS/2), ymax=meanTS+(sdev_TS/2)), width=.0051,col="grey30",alpha=0.49) + 
   theme_minimal()+
-  xlab("Log (Length)")+
+  xlab("Log-Length (cm)")+
   ylab("TS (dB)")+
   # ggtitle("RELACION del TS ~ LENGTH (FISH TRACKS)")+
   # theme(plot.title = element_text(hjust = 0.5))+
@@ -160,7 +168,7 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
   geom_abline(slope=20, intercept=coef(m1)[1], lty=2) +
   geom_abline(slope=coef(m0)[2], intercept=coef(m0)[1]) +
   theme_minimal()+
-  xlab("Log (Length)")+
+  xlab("Log-Length (cm)")+
   ylab("TS (dB)")+
   # ggtitle("RELACION del TS ~ LENGTH (FISH TRACKS)")+
   # theme(plot.title = element_text(hjust = 0.5))+
@@ -177,7 +185,9 @@ ggplot(bio_ft_summary,aes(x=length,y=meanTS))+
 ggsave("Figuras/TS-logL-b20.tiff", width=17, height=12, units="cm")
 
 
-# HISTOGRAMAS FACET
+
+
+# HISTOGRAMAS FACET----
 
 ggplot(all_ts, aes(x=TS_comp)) +
   geom_histogram(aes(y = stat(density)), fill="white",binwidth = 2,color="black") +
@@ -190,7 +200,7 @@ ggplot(all_ts, aes(x=TS_comp)) +
   facet_wrap(~id,nrow=2,scales = "free_y") +
   theme_classic()
 
-ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
+# ggsave("Figuras/ggridges_fish_track_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
        # width=27, height=17, units="cm")
 
 
@@ -345,7 +355,7 @@ img5 <- image_read("Figuras/fish_tilt_img/tuna_edit5.PNG")
 
 
 
-# FIGURA  LENGTH ~ DETPH
+# FIGURA  LENGTH ~ DEPTH
 
 # Modelo optimo:
 modelo <- lm(all_ts$length ~ (all_ts$Target_range))
@@ -369,8 +379,8 @@ ggplot(all_ts,aes(x=as.numeric(all_ts$length),y=-Target_range))+
   # theme(plot.title = element_text(hjust = 0.5))+
   # annotation_custom(my_grob)+
   annotate("text", x=120, y=-55, label=my_text, hjust=0) +
-  theme_classic()+
-  theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) 
+  theme_classic()
+  # theme(axis.line = element_line(arrow = arrow(type='closed', length = unit(10,'pt')))) 
 
 # ggsave("depth_length.tiff", width=18, height=18, units="cm")
 ggsave("Figuras/depth_length_ken6.tiff", width=17, height=12, units="cm")
@@ -397,21 +407,21 @@ my_text <- paste("Multiple R-squared:" ,
 ggplot(bio_ft_summary,aes(x=meanTS,y=-Mean_depth))+
 # ggplot(all_ts,aes(x=Target_range,y=TS_comp))+
   geom_point(size=1.3, alpha=0.5)+
-  geom_smooth(method = "lm") +
+  geom_smooth(method = "lm", color="black") +
   theme_minimal()+
-  xlab("TS")+
-  ylab("Z")+
-  ggtitle("RELACION del TS ~ Z (FISH TRACKS)")+
+  xlab("TS (dB)")+
+  ylab("Depth (m)")+
+  # ggtitle("RELACION del TS ~ Z (FISH TRACKS)")+
   # theme(plot.title = element_text(hjust = 0.5))+
   # annotation_custom(my_grob)+
   # annotate("text", x=30, y=0, label=my_text) +
   theme_classic()
 
-# ggsave("Figuras/ts_tilt_mean.tiff", width=18, height=18, units="cm")
+ggsave("Figuras/ts_depth.tiff", width=18, height=18, units="cm")
 # ggsave("ts_tilt_all.tiff", width=18, height=18, units="cm")
 
-
-
+model_depth <- lm(bio_ft_summary$Mean_depth ~ bio_ft_summary$meanTS)
+summary(model_depth)
 
 
 
