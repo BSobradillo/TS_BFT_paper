@@ -103,21 +103,6 @@ ggplot(all_ts, aes(x=Target_true_depth, y=TS_comp)) +
   geom_point()+
   facet_wrap(.~id)
 
-# calculate number of targets without gps: 
-dim(all_ts[all_ts$id==7,])
-# calculate number of targets deeper than 40 m depth: 
-dim(all_ts[all_ts$Target_range>40,])
-# calculate number of targets <12m and >40m depth: 
-dim(all_ts[all_ts$Target_range<12 | all_ts$Target_range>40,])
-# calculate number of targets <12m and >40m depth and no gps: 
-dim(all_ts[all_ts$id==7 | all_ts$Target_range<12 | all_ts$Target_range>40,])
-
-# which sets have targets at ranges below 40m: only set 1
-unique(all_ts$id[all_ts$Target_range>40])
-unique(all_ts$id[all_ts$Target_range<12])
-
-
-
 
 # number of total tracks
 length(unique(all_ts$track_id))
@@ -125,7 +110,8 @@ length(unique(all_ts$track_id))
 
 # filtramos set sin GPS y nearfield
 all_ts <- all_ts %>%
-  filter(id!=7, Target_range>9.2)
+  filter(id!=7, Target_range>4.55) 
+  # mutate(FL = case_when(id==6~58.8,TRUE~FL))
 unique(all_ts$id)
 length(unique(all_ts$track_id))
 
@@ -308,7 +294,7 @@ ggplot(bio_ft_summary,aes(x=FL,y=meanTS))+
   theme_classic() 
 
 
-ggsave("Figuras/TSmined_plus40mREALDEPTH-st-logL-b20.tiff", width=17, height=12, units="cm")
+ggsave("Figuras/TSmined_NFplus40mREALDEPTH-st-logL-b20.tiff", width=17, height=12, units="cm")
 
 ## TRACKS/SET----
 # 1. Average of tracks per set 
@@ -449,7 +435,7 @@ ggplot(bio_ft_summary, aes(x=meanTS)) +
   xlab ("TS (dB)") + 
   ylab ("Frequency") +
   theme(text = element_text(size = 15)) +
-  facet_wrap(~id,nrow=2,scales = "free_y") +
+  facet_wrap(~id,nrow=3,scales = "free_y") +
   theme_classic()
 
 ggsave("Figuras/ggridges_tracks_mined_plus40mREALDEPTH_distrib_ALL_facet.tiff", width = 27, height=12,units="cm", dpi = 300)
@@ -477,7 +463,9 @@ ggplot(all_ts, aes(x = TS_comp, y = as.factor(FL), fill = factor(stat(quantile))
   )
 
 
-ggplot(data=bio_ft_summary_order, aes(x = meanTS, y = as.factor(round(FL,2)))) +
+# Los ridges de los sets con la misma talla los junto para evitar la mala visibilidad del set con 1 solo track
+
+ggplot(data=bio_ft_summary, aes(x = meanTS, y = as.factor(round(FL,2)))) +
   geom_density_ridges_gradient(panel_scaling = T) +
   # scale_fill_viridis_c(name="N fish tracks") +
   theme_ridges(center_axis_labels = T) + 
@@ -490,14 +478,14 @@ ggplot(data=bio_ft_summary_order, aes(x = meanTS, y = as.factor(round(FL,2)))) +
   geom_text(aes(x = -5, y=0.64,label="FT(N)"),color="grey30",)+
   # geom_text(aes(x = -1, y=0.64,label="Set"),color="blue")+
   geom_text(aes(x = -5, y=1.3,label=tt_summary_order$tt_Num_Fish_Tracks[1]),color="grey30")+
-  geom_text(aes(x = -5, y=2.3,label=tt_summary_order$tt_Num_Fish_Tracks[2]),color="grey30")+
-  geom_text(aes(x = -5, y=3.3,label=tt_summary_order$tt_Num_Fish_Tracks[3]),color="grey30")+
-  geom_text(aes(x = -5, y=4.3,label=tt_summary_order$tt_Num_Fish_Tracks[4]),color="grey30")+
-  geom_text(aes(x = -5, y=5.3,label=tt_summary_order$tt_Num_Fish_Tracks[5]),color="grey30")+
-  geom_text(aes(x = -5, y=6.3,label=tt_summary_order$tt_Num_Fish_Tracks[6]),color="grey30")+
-  geom_text(aes(x = -5, y=7.3,label=tt_summary_order$tt_Num_Fish_Tracks[7]),color="grey30")+
-  geom_text(aes(x = -5, y=8.3,label=tt_summary_order$tt_Num_Fish_Tracks[8]),color="grey30")
-  # geom_text(aes(x = -5, y=9.3,label=tt_summary_order$tt_Num_Fish_Tracks[9]),color="grey30")
+  geom_text(aes(x = -5, y=2.3,label=tt_summary_order$tt_Num_Fish_Tracks[2]+1),color="grey30")+
+  geom_text(aes(x = -5, y=3.3,label=tt_summary_order$tt_Num_Fish_Tracks[4]),color="grey30")+
+  geom_text(aes(x = -5, y=4.3,label=tt_summary_order$tt_Num_Fish_Tracks[5]),color="grey30")+
+  geom_text(aes(x = -5, y=5.3,label=tt_summary_order$tt_Num_Fish_Tracks[6]),color="grey30")+
+  geom_text(aes(x = -5, y=6.3,label=tt_summary_order$tt_Num_Fish_Tracks[7]),color="grey30")+
+  geom_text(aes(x = -5, y=7.3,label=tt_summary_order$tt_Num_Fish_Tracks[8]),color="grey30")+
+  geom_text(aes(x = -5, y=8.3,label=tt_summary_order$tt_Num_Fish_Tracks[9]),color="grey30")
+  # geom_text(aes(x = -5, y=9.3,label=tt_summary_order$tt_Num_Fish_Tracks[]),color="grey30")
   # geom_text(aes(x = -5, y=10.3,label=bio_ft_summary_order$Num_Fish_Tracks[10]),color="grey30")+
   # geom_text(aes(x = -5, y=11.3,label=bio_ft_summary_order$Num_Fish_Tracks[11]),color="grey30")
   # geom_text(aes(x = -1, y=1.3,label=bio_ft_summary_order$id[1]),color="blue")+
