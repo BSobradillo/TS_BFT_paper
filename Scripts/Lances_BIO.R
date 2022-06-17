@@ -557,7 +557,7 @@ summary(model_TS_alpha)
 
   # FIGURA TS ~ L + TILT----
 
-  modelo_TS_L_tilt <- lm(bio_ft_summary$meanTS ~ log10(bio_ft_summary$FL) + bio_ft_summary$tilt)
+  modelo_TS_L_tilt <- lm(bio_ft_summary$meanTS ~ log10(bio_ft_summary$FL) + bio_ft_summary$tilt))
   summary(modelo_TS_L_tilt)
 
 # ggsave("ts_tilt_FT_loess.tiff", width=18, height=18, units="cm")
